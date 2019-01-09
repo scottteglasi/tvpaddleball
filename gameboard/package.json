@@ -1,0 +1,16 @@
+{
+  "name": "paddleboard-gameboard",
+  "version": "1.0.0",
+  "description": "Paddleboard game - the portion that runs on the TV screen",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "gyronorm": "^2.0.6",
+    "phaser": "^3.15.1",
+    "socket.io-client": "^2.2.0"
+  }
+}
