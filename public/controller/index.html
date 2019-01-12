@@ -1,0 +1,21 @@
+<html>
+<head>
+    <script src="node_modules/socket.io-client/dist/socket.io.js"></script>
+    <script src="node_modules/gyronorm/dist/gyronorm.complete.js"></script>
+</head>
+<body>
+<div id="debug_view">
+
+</div>
+<script>
+    var socket = io('http://' + window.location.hostname + ':3000');
+
+    var gn = new GyroNorm();
+    gn.init().then(function() {
+        gn.start(function(data) {
+            socket.emit('controller_data', data);
+        });
+    });
+</script>
+</body>
+</html>

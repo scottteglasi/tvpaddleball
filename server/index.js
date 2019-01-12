@@ -1,15 +1,20 @@
-var app = require('express')();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
+var app = require('http').createServer(handler);
+var io = require('socket.io')(app);
 
-io.on('connection', function(socket){
+app.listen(3000);
+
+function handler(req, res) {
+  res.writeHead(200);
+  res.end("<html><body><h1>Socket Server</h1></body></html>");
+}
+
+io.on('connection', function(socket) {
     console.log('a user connected');
+    socket.on('controller_data', function(data) {
+        console.log(JSON.stringify(data));
+    });
     socket.on('disconnect', function() {
         console.log('user disconnected');
     });
-});
-
-http.listen(3000, function() {
-    console.log('listening on *:3000');
 });
 
