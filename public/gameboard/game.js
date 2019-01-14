@@ -21,11 +21,16 @@ var socket = io('http://' + window.location.hostname + ':3000');
 
 var chart;
 var speedChart;
-var chartDatapoints = [{ y: 0 }];
 var xDatapoints = [];
 var yDatapoints = [];
 var zDatapoints = [];
 var speedDatapoints = [{ y: 0 }];
+var eventCount = 0;
+var paddleSpeed = 0;
+var lastPaddleSpeedChange = new Date();
+var message = '';
+var leftPaddle;
+
 
 window.onload = function() {
 chart = new CanvasJS.Chart("chartContainer", {
@@ -77,39 +82,50 @@ function preload() {
 }
 
 function create() {
-    var leftPaddle = this.physics.add.sprite(100,300,'paddle');
+    leftPaddle = this.physics.add.sprite(100,300,'paddle');
     leftPaddle.setCollideWorldBounds(true);
-    var eventCount = 0;
-    var paddleSpeed = 0;
+
     socket.on('controller_data', function(data) {
-        if ( ! data.dm.y < 0.5 && ! data.dm.y > -0.5 ) {
+        message = 'y: ' + data.dm.y;
+
+        if ( data.dm.y > 0.5 || data.dm.y < -0.5 ) {
 	        paddleSpeed += data.dm.y;
-	}
-	if (paddleSpeed < 0.25 && paddleSpeed > -0.25) {
-	    paddleSpeed = 0;
+	        lastPaddleSpeedChange = new Date();
         }
-        leftPaddle.setVelocityY(paddleSpeed * 10);
+        message += "<br />" + lastPaddleSpeedChange.getTime();
+
+
+        if (paddleSpeed < 0.25 && paddleSpeed > -0.25) {
+    	    paddleSpeed = 0;
+        }
+        leftPaddle.setVelocityY(paddleSpeed * 100);
         leftPaddle.setRotation(data.do.beta * Math.PI / 180);
 
-	xDatapoints.push({ x: eventCount, y: data.dm.x });
- 	yDatapoints.push({ x: eventCount, y: data.dm.y });
-	zDatapoints.push({ x: eventCount, y: data.dm.z });
+        xDatapoints.push({ x: eventCount, y: data.dm.x });
+        yDatapoints.push({ x: eventCount, y: data.dm.y });
+        zDatapoints.push({ x: eventCount, y: data.dm.z });
         speedDatapoints.push({ x: eventCount, y: paddleSpeed });
         if (xDatapoints.length > 200) { 
-		xDatapoints.shift();
-		yDatapoints.shift();
-		zDatapoints.shift();
-		speedDatapoints.shift();
-	}
+            xDatapoints.shift();
+            yDatapoints.shift();
+            zDatapoints.shift();
+            speedDatapoints.shift();
+        }
         chart.render();
-	speedChart.render();
+    	speedChart.render();
         eventCount++;
 
+        document.getElementById('log').innerHTML = message;
 
     });
 }
 
 function update() {
+    var now = new Date();
+    if (now.getTime() - lastPaddleSpeedChange.getTime() > 100)
+    {
+        paddleSpeed = 0;
+    }
 
 }
 
