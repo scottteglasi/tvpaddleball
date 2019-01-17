@@ -2,16 +2,30 @@
 <head>
     <script src="node_modules/socket.io-client/dist/socket.io.js"></script>
     <script src="node_modules/gyronorm/dist/gyronorm.complete.js"></script>
+    <script src="node_modules/nosleep.js/dist/NoSleep.js"></script>
 </head>
 <body>
+<h1>Pong Controller</h1>
 <div id="debug_view">
 
 </div>
 <script>
     var socket = io('http://' + window.location.hostname + ':3000');
 
+    var noSleep = new NoSleep();
+
+    document.addEventListener('touchstart', function enableNoSleep() {
+        document.removeEventListener('touchstart', enableNoSleep, false);
+        noSleep.enable();
+        document.getElementById('debug_view').innerHTML = 'NOSLEEP ENABLED';
+    }, false);
+
     var gn = new GyroNorm();
-    gn.init().then(function() {
+    var args = {
+        frequency: 25
+    };
+
+    gn.init(args).then(function() {
         gn.start(function(data) {
             socket.emit('controller_data', data);
         });
