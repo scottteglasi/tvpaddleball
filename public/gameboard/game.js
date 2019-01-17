@@ -20,70 +20,12 @@ var game = new Phaser.Game(config);
 
 var socket = io('http://' + window.location.hostname + ':3000');
 
-var chart;
-var speedChart;
-var xDatapoints = [];
-var yDatapoints = [];
-var zDatapoints = [];
-var speedDatapoints = [{ y: 0 }];
-var eventCount = 0;
-var paddleSpeed = 0;
-var lastPaddleSpeedChange = new Date();
-var message = '';
 var leftPaddle;
 var rightPaddle;
 var paddleYmin = 0;
 var paddleYmax = 600;
 
 var ball;
-
-var topWall;
-var bottomWall;
-
-
-// window.onload = function() {
-// chart = new CanvasJS.Chart("chartContainer", {
-// 		title:{
-// 			text: "My First Chart in CanvasJS"
-// 		},
-// 		data: [
-// 		{
-// 			type: "spline",
-// 			dataPoints: xDatapoints,
-// 			name: "alpha",
-// 			showInLegend: true
-// 		},
-// 		{
-// 			type: "spline",
-// 			dataPoints: yDatapoints,
-// 			name: "beta",
-// 			showInLegend: true
-// 		},
-// 		{
-// 			type: "spline",
-// 			dataPoints: zDatapoints,
-// 			name: "gamma",
-// 			showInLegend: true
-// 		},
-//
-// 		]
-// 	});
-// 	chart.render();
-//
-// 	speedChart = new CanvasJS.Chart("chartContainer2", {
-//                 title:{
-//                         text: "Speed calculation"
-//                 },
-//                 data: [
-//                 {
-//                         type: "spline",
-//                         dataPoints: speedDatapoints,
-//                         name: "speed",
-//                         showInLegend: true
-//                 }]
-// 	});
-// 	speedChart.render();
-// }
 
 
 function preload() {
@@ -97,20 +39,11 @@ function create() {
     this.matter.world.setBounds(-20, -20, game.config.width+50, game.config.height+20);
     this.matter.world.setGravity(0,0);
 
-    // // Build the top and bottom walls
-    // topWall = this.matter.add.sprite(game.config.width / 2, 0, 'wall');
-    // topWall.setStatic(true);
-    //
-    // bottomWall = this.matter.add.sprite(game.config.width / 2, game.config.height, 'wall');
-
     leftPaddle = this.matter.add.sprite(100,300,'paddle');
     leftPaddle.setStatic(true);
 
-    // leftPaddle.setCollideWorldBounds(true);
-
     rightPaddle = this.matter.add.sprite(700, 300, 'paddle');
     rightPaddle.setStatic(true);
-    // rightPaddle.setCollideWorldBounds(true);
 
     socket.on('controller_data_1', function(data) {
         // Translate gyro position to a Y position - using 0-90 as the valid space
@@ -139,7 +72,6 @@ function create() {
     ball.setVelocity(5, 0);
     ball.setFriction(0, 0);
     ball.setBounce(2);
-
 }
 
 function update() {
