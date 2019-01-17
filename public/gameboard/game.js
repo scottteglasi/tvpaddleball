@@ -3,9 +3,10 @@ var config = {
     width: 800,
     height: 600,
     physics: {
-        default: 'arcade',
-        arcade: {
-
+        default: 'matter',
+        matter: {
+            gravityX: 0,
+            gravityY: 0
         }
     },
     scene: {
@@ -30,101 +31,141 @@ var paddleSpeed = 0;
 var lastPaddleSpeedChange = new Date();
 var message = '';
 var leftPaddle;
+var rightPaddle;
+var paddleYmin = 0;
+var paddleYmax = 600;
+
+var ball;
+
+var topWall;
+var bottomWall;
 
 
-window.onload = function() {
-chart = new CanvasJS.Chart("chartContainer", {
-		title:{
-			text: "My First Chart in CanvasJS"              
-		},
-		data: [              
-		{
-			type: "spline",
-			dataPoints: xDatapoints,
-			name: "x",
-			showInLegend: true
-		},
-		{
-			type: "spline",
-			dataPoints: yDatapoints,
-			name: "y",
-			showInLegend: true
-		},
-		{
-			type: "spline",
-			dataPoints: zDatapoints,
-			name: "z",
-			showInLegend: true
-		},
-
-		]
-	});
-	chart.render();
-
-	speedChart = new CanvasJS.Chart("chartContainer2", {
-                title:{
-                        text: "Speed calculation"
-                },
-                data: [
-                {
-                        type: "spline",
-                        dataPoints: speedDatapoints,
-                        name: "speed",
-                        showInLegend: true
-                }]
-	});
-	speedChart.render();
-}
+// window.onload = function() {
+// chart = new CanvasJS.Chart("chartContainer", {
+// 		title:{
+// 			text: "My First Chart in CanvasJS"
+// 		},
+// 		data: [
+// 		{
+// 			type: "spline",
+// 			dataPoints: xDatapoints,
+// 			name: "alpha",
+// 			showInLegend: true
+// 		},
+// 		{
+// 			type: "spline",
+// 			dataPoints: yDatapoints,
+// 			name: "beta",
+// 			showInLegend: true
+// 		},
+// 		{
+// 			type: "spline",
+// 			dataPoints: zDatapoints,
+// 			name: "gamma",
+// 			showInLegend: true
+// 		},
+//
+// 		]
+// 	});
+// 	chart.render();
+//
+// 	speedChart = new CanvasJS.Chart("chartContainer2", {
+//                 title:{
+//                         text: "Speed calculation"
+//                 },
+//                 data: [
+//                 {
+//                         type: "spline",
+//                         dataPoints: speedDatapoints,
+//                         name: "speed",
+//                         showInLegend: true
+//                 }]
+// 	});
+// 	speedChart.render();
+// }
 
 
 function preload() {
     this.load.image('paddle', 'assets/paddle.png');
+    this.load.image('ball', 'assets/ball.png');
+    this.load.image('wall', 'assets/wall.png');
+
 }
 
 function create() {
-    leftPaddle = this.physics.add.sprite(100,300,'paddle');
-    leftPaddle.setCollideWorldBounds(true);
+    this.matter.world.setBounds(-20, -20, game.config.width+50, game.config.height+20);
+    this.matter.world.setGravity(0,0);
 
-    socket.on('controller_data', function(data) {
-        message = 'y: ' + data.dm.y;
+    // // Build the top and bottom walls
+    // topWall = this.matter.add.sprite(game.config.width / 2, 0, 'wall');
+    // topWall.setStatic(true);
+    //
+    // bottomWall = this.matter.add.sprite(game.config.width / 2, game.config.height, 'wall');
 
-        if ( data.dm.y > 0.5 || data.dm.y < -0.5 ) {
-	        paddleSpeed += data.dm.y;
-	        lastPaddleSpeedChange = new Date();
+    leftPaddle = this.matter.add.sprite(100,300,'paddle');
+    leftPaddle.setStatic(true);
+
+    // leftPaddle.setCollideWorldBounds(true);
+
+    rightPaddle = this.matter.add.sprite(700, 300, 'paddle');
+    rightPaddle.setStatic(true);
+    // rightPaddle.setCollideWorldBounds(true);
+
+    socket.on('controller_data_1', function(data) {
+        // Translate gyro position to a Y position - using 0-90 as the valid space
+        let leftPaddlePosition = data.do.beta * paddleYmax / 90;
+        if (data.do.beta > 90) {
+            leftPaddlePosition = paddleYmax;
+        } else if (data.do.beta <= 0) {
+            leftPaddlePosition = paddleYmin;
         }
-        message += "<br />" + lastPaddleSpeedChange.getTime();
-
-
-        if (paddleSpeed < 0.25 && paddleSpeed > -0.25) {
-    	    paddleSpeed = 0;
-        }
-        leftPaddle.setVelocityY(paddleSpeed * 100);
-        leftPaddle.setRotation(data.do.beta * Math.PI / 180);
-
-        xDatapoints.push({ x: eventCount, y: data.dm.x });
-        yDatapoints.push({ x: eventCount, y: data.dm.y });
-        zDatapoints.push({ x: eventCount, y: data.dm.z });
-        speedDatapoints.push({ x: eventCount, y: paddleSpeed });
-        if (xDatapoints.length > 200) { 
-            xDatapoints.shift();
-            yDatapoints.shift();
-            zDatapoints.shift();
-            speedDatapoints.shift();
-        }
-        chart.render();
-    	speedChart.render();
-        eventCount++;
-
-        document.getElementById('log').innerHTML = message;
-
+        leftPaddle.setY(leftPaddlePosition);
+        leftPaddle.setRotation(data.do.gamma * Math.PI / 180);
     });
+
+    socket.on('controller_data_2', function(data) {
+        // Translate gyro position to a Y position - using 0-90 as the valid space
+        let rightPaddlePosition = data.do.beta * paddleYmax / 90;
+        if (data.do.beta > 90) {
+            rightPaddlePosition = paddleYmax;
+        } else if (data.do.beta <= 0) {
+            rightPaddlePosition = paddleYmin;
+        }
+        rightPaddle.setY(rightPaddlePosition);
+        rightPaddle.setRotation(data.do.gamma * Math.PI / 180);
+    });
+    ball = this.matter.add.sprite(400, 300, 'ball');
+    ball.setVelocity(5, 0);
+    ball.setFriction(0, 0);
+    ball.setBounce(2);
+
 }
 
 function update() {
-    var now = new Date();
-    if (now.getTime() - lastPaddleSpeedChange.getTime() > 100)
+    if (ball.body.velocity.x > 10)
     {
-        paddleSpeed = 0;
+        ball.setVelocityX(10);
+    }
+    if (ball.body.velocity.y > 10)
+    {
+        ball.setVelocityY(10);
+    }
+
+    if (ball.x >= game.config.width) {
+        // player 1 scores
+        console.log('Player 1 scores');
+        ball.setX(400);
+        ball.setY(300);
+        ball.setVelocity(-5,0);
+        ball.setAngularVelocity(0);
+    } else if (ball.x <= 0) {
+        // player 2 scores
+        console.log('Player 2 scores');
+        ball.setX(400);
+        ball.setY(300);
+        ball.setVelocity(5,0);
+        ball.setAngularVelocity(0);
     }
 
 }
