@@ -4,8 +4,8 @@
     <script src="node_modules/gyronorm/dist/gyronorm.complete.js"></script>
     <script src="node_modules/nosleep.js/dist/NoSleep.js"></script>
 </head>
-<body>
-<h1>Pong Controller</h1>
+<body id="body" style="background-color: red">
+<h1 id="message">NOT READY</h1>
 <div id="debug_view">
 
 </div>
@@ -13,12 +13,22 @@
     var socket = io('http://' + window.location.hostname + ':3000');
 
     var noSleep = new NoSleep();
+    var sleepEnabled = false;
 
-    document.addEventListener('touchstart', function enableNoSleep() {
-        document.removeEventListener('touchstart', enableNoSleep, false);
-        noSleep.enable();
-        document.getElementById('debug_view').innerHTML = 'NOSLEEP ENABLED';
+    document.addEventListener('touchstart', function playerReady() {
+        if (sleepEnabled !== true) {
+            noSleep.enable();
+            sleepEnabled = true;
+        }
+        socket.emit('player_ready', true);
+        document.getElementById('body').style.backgroundColor = 'green';
+        document.getElementById('message').innerHTML = 'READY'; // FIXME: Don't emit ready when in ready state
     }, false);
+
+    socket.on('player_reset', function() {
+        document.getElementById('body').style.backgroundColor = 'red';
+        document.getElementById('message').innerHTML = 'NOT READY';
+    });
 
     var gn = new GyroNorm();
     var args = {
@@ -30,6 +40,8 @@
             socket.emit('controller_data', data);
         });
     });
+
+
 </script>
 </body>
 </html>

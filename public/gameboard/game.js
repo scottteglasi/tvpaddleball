@@ -29,6 +29,9 @@ var ball;
 var playerScores = { "1": 0, "2": 0 };
 var scoreText;
 
+var playerReady = { "1": false, "2": false };
+var startBallVelocityX = Math.random() > 0.5 ? 5 : -5;
+
 var lastAngularVelocity;
 var niceSpinText;
 
@@ -38,6 +41,7 @@ var bounceCountText;
 var highestBounceCountText;
 
 var lastBallVelocity = 0;
+var gameRunning = false;
 
 window.onload = function() {
     game = new Phaser.Game(config);
@@ -97,68 +101,82 @@ function create() {
         rightPaddle.setY(rightPaddlePosition);
         rightPaddle.setRotation(data.do.gamma * Math.PI / 180);
     });
+
+    socket.on('player1_ready', function(data) {
+        console.log('player1 ready');
+        playerReady[1] = true;
+        checkStart();
+    });
+    socket.on('player2_ready', function(data) {
+        console.log('player2 ready');
+        playerReady[2] = true;
+        rightPaddle
+        checkStart();
+    });
+
     ball = this.matter.add.sprite(640, 360, 'ball');
-    ball.setVelocity(5, 0);
+    ball.setVelocity(0, 0);
     ball.setFriction(0, 0);
     ball.setBounce(2);
 
 }
 
-function update() {
-    if (lastBallVelocity === 0)
+function checkStart() {
+    if (playerReady[1] && playerReady[2])
     {
-        lastBallVelocity = ball.body.velocity.x;
+        gameRunning = true;
+        ball.setVelocityX(startBallVelocityX);
     }
+}
 
-    if (lastBallVelocity !== ball.body.velocity.x)
-    {
-        if ( (lastBallVelocity > 0 && ball.body.velocity.x < 0) || (lastBallVelocity < 0 && ball.body.velocity.x > 0))
-        {
-            incrementBounceCount();
+function update() {
+    if (playerReady[1] && playerReady[2]) {
+        if (lastBallVelocity === 0) {
             lastBallVelocity = ball.body.velocity.x;
         }
-    }
 
-    if (ball.body.velocity.x > 10)
-    {
-        ball.setVelocityX(10);
-    }
-    if (ball.body.velocity.y > 10)
-    {
-        ball.setVelocityY(10);
-    }
-
-    if (ball.body.velocity.x < 3 && ball.body.velocity.x > 0)
-    {
-        ball.setVelocityX(3);
-    }
-
-    if (ball.body.velocity.x > -3 && ball.body.velocity.x < 0)
-    {
-        ball.setVelocityX(-3);
-    }
-
-    if (ball.x >= game.config.width) {
-        // player 1 scores
-        playerScored(1);
-
-    } else if (ball.x <= 0) {
-        playerScored(2);
-    }
-
-    if (lastAngularVelocity !== ball.body.angularVelocity)
-    {
-        console.log(ball.body.angularVelocity);
-
-        if (ball.body.angularVelocity > 0.5 || ball.body.angularVelocity < -0.5)
-        {
-            niceSpinText.setVisible(true);
-        } else {
-            niceSpinText.setVisible(false);
+        if (lastBallVelocity !== ball.body.velocity.x) {
+            if ((lastBallVelocity > 0 && ball.body.velocity.x < 0) || (lastBallVelocity < 0 && ball.body.velocity.x > 0)) {
+                incrementBounceCount();
+                lastBallVelocity = ball.body.velocity.x;
+            }
         }
-    }
 
-    lastAngularVelocity = ball.body.angularVelocity;
+        if (ball.body.velocity.x > 10) {
+            ball.setVelocityX(10);
+        }
+        if (ball.body.velocity.y > 10) {
+            ball.setVelocityY(10);
+        }
+
+        if (ball.body.velocity.x < 3 && ball.body.velocity.x > 0) {
+            ball.setVelocityX(3);
+        }
+
+        if (ball.body.velocity.x > -3 && ball.body.velocity.x < 0) {
+            ball.setVelocityX(-3);
+        }
+
+        if (ball.x >= game.config.width) {
+            // player 1 scores
+            playerScored(1);
+
+        } else if (ball.x <= 0) {
+            playerScored(2);
+        }
+
+        if (lastAngularVelocity !== ball.body.angularVelocity) {
+            console.log(ball.body.angularVelocity);
+
+            if (ball.body.angularVelocity > 0.5 || ball.body.angularVelocity < -0.5) {
+                niceSpinText.setVisible(true);
+            } else {
+                niceSpinText.setVisible(false);
+            }
+        }
+
+        lastAngularVelocity = ball.body.angularVelocity;
+    }
 
     // Assemble an object to emit to any gameboard view-only shemozzles
     // var gameboardDataPack = {
@@ -194,13 +212,17 @@ function playerScored(scoringPlayerNumber)
     playerScores[scoringPlayerNumber]++;
     renderScores();
 
-    var ballVelocityX = scoringPlayerNumber === 1 ? -5 : 5;
+    startBallVelocityX = scoringPlayerNumber === 1 ? -5 : 5;
 
     ball.setX(640);
     ball.setY(360);
-    ball.setVelocity(ballVelocityX,0);
+    ball.setVelocity(0,0);
     ball.setAngularVelocity(0);
     resetBounceCount();
+    playerReady[1] = false;
+    playerReady[2] = false;
+    socket.emit('player_reset');
+
 }
 
 function renderScores()

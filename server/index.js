@@ -31,9 +31,19 @@ io.on('connection', function(socket) {
             console.log('Player ' + myPlayerNumber + ' connected.');
         }
 
-        socket.broadcast.emit('controller_data_' + myPlayerNumber, data);
+        socket.broadcast.volatile.emit('controller_data_' + myPlayerNumber, data);
     });
 
+    socket.on('player_ready', function(data) {
+        console.log('player' + myPlayerNumber + '_ready');
+        socket.broadcast.emit('player' + myPlayerNumber + '_ready', true);
+    });
+
+    socket.on('player_reset', function(data) {
+        console.log('player' + myPlayerNumber + '_reset');
+        socket.broadcast.emit('player_reset', true);
+
+    });
     socket.on('disconnect', function() {
         players[myPlayerNumber] = null;
         console.log('Player ' + myPlayerNumber + ' disconnected.');
