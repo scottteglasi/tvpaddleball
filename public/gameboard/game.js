@@ -43,6 +43,8 @@ var highestBounceCountText;
 var lastBallVelocity = 0;
 var gameRunning = false;
 
+var readyText;
+
 window.onload = function() {
     game = new Phaser.Game(config);
     resize();
@@ -119,13 +121,16 @@ function create() {
     ball.setFriction(0, 0);
     ball.setBounce(2);
 
+    readyText = this.add.text(550,320, 'Ready? Tap your screen.');
 }
 
 function checkStart() {
-    if (playerReady[1] && playerReady[2])
+    if (playerReady[1] && playerReady[2] && gameRunning !== true)
     {
         gameRunning = true;
         ball.setVelocityX(startBallVelocityX);
+        readyText.setVisible(false);
+
     }
 }
 
@@ -221,8 +226,9 @@ function playerScored(scoringPlayerNumber)
     resetBounceCount();
     playerReady[1] = false;
     playerReady[2] = false;
+    gameRunning = false;
+    readyText.setVisible(true);
     socket.emit('player_reset');
-
 }
 
 function renderScores()
