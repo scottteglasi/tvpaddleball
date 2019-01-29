@@ -45,6 +45,8 @@ var gameRunning = false;
 
 var readyText;
 
+var urlText;
+
 window.onload = function() {
     game = new Phaser.Game(config);
     resize();
@@ -63,6 +65,9 @@ function preload() {
 function create() {
     this.matter.world.setBounds(-20, -20, game.config.width+50, game.config.height+20);
     this.matter.world.setGravity(0,0);
+
+    urlText = this.add.text(300, 620, 'https://bit.ly/2UrioT4', { fontSize: '50px' });
+
     scoreText = this.add.text(600,20, '0 : 0', { fontSize: '32px', fill: '#FFF' });
     scoreText.align = 'center';
 
@@ -130,7 +135,7 @@ function checkStart() {
         gameRunning = true;
         ball.setVelocityX(startBallVelocityX);
         readyText.setVisible(false);
-
+        urlText.setVisible(false);
     }
 }
 
@@ -228,6 +233,7 @@ function playerScored(scoringPlayerNumber)
     playerReady[2] = false;
     gameRunning = false;
     readyText.setVisible(true);
+    urlText.setVisible(true);
     socket.emit('player_reset');
 }
 
